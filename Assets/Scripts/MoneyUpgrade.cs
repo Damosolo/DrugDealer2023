@@ -2,26 +2,26 @@ using UnityEngine;
 
 public class MoneyUpgrade : MonoBehaviour
 {
-    public int baseEarning = 10; // The base amount of money earned from tasks
-    public int upgradeCost = 100; // The cost to purchase the upgrade
-    public int upgradeIncrement = 5; // The amount by which the earning increases with each upgrade
+    public int moneyCost = 100; // Cost of the money upgrade
 
-    private int upgradeLevel = 0; // Current upgrade level
-
-    public void PurchaseUpgrade()
+    private void OnTriggerEnter(Collider other)
     {
-        if (MoneyManager.instance.SpendMoney(upgradeCost))
+        if (other.CompareTag("Player"))
         {
-            upgradeLevel++;
-        }
-        else
-        {
-            Debug.Log("Insufficient funds to purchase the upgrade.");
+            MoneyManager moneyManager = MoneyManager.instance;
+
+            // Check if the player has enough money to purchase the upgrade
+            if (moneyManager.SpendMoney(moneyCost))
+            {
+                UpgradeObject();
+                gameObject.SetActive(false); // Disable the upgrade object after purchase
+            }
         }
     }
 
-    public int GetCurrentEarning()
+    private void UpgradeObject()
     {
-        return baseEarning + (upgradeLevel * upgradeIncrement);
+        // Implement your logic to upgrade the object here
+        Debug.Log("Object Upgraded!");
     }
 }

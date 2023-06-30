@@ -2,40 +2,34 @@ using UnityEngine;
 
 public class MoneyManager : MonoBehaviour
 {
-    public static MoneyManager instance; // Singleton instance of the Money Manager
+    public static MoneyManager instance;
 
-    public int playerMoney = 0; // Current amount of player money
+    public int money = 0; // Current amount of money
 
     private void Awake()
     {
         if (instance == null)
-        {
             instance = this;
-        }
         else
-        {
             Destroy(gameObject);
-            return;
-        }
-
-        DontDestroyOnLoad(gameObject);
     }
 
     public void EarnMoney(int amount)
     {
-        playerMoney += amount;
+        money += amount;
+        Debug.Log("Money Earned: " + amount);
     }
 
     public bool SpendMoney(int amount)
     {
-        if (playerMoney >= amount)
+        if (money >= amount)
         {
-            playerMoney -= amount;
-            return true; // Purchase successful
+            money -= amount;
+            Debug.Log("Money Spent: " + amount);
+            return true; // Return true if the player has enough money and the transaction is successful
         }
-        else
-        {
-            return false; // Not enough money to make the purchase
-        }
+
+        Debug.Log("Not enough money to spend: " + amount);
+        return false; // Return false if the player does not have enough money
     }
 }
