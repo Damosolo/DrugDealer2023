@@ -663,8 +663,8 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.99067295, y: 1, z: 1.187048}
-  m_Center: {x: 0.0178383, y: 0, z: -0.09352398}
+  m_Size: {x: 0.99067295, y: 1, z: 1.7816992}
+  m_Center: {x: 0.0178383, y: 0, z: -0.3908496}
 --- !u!23 &373054609
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2284,16 +2284,16 @@ MonoBehaviour:
   levelRewards:
   - level: 2
     xp: 100
-    moneyPerTask: 100
-    cost: 10
+    moneyPerTask: 60
+    cost: 100
   - level: 3
     xp: 200
-    moneyPerTask: 200
-    cost: 20
+    moneyPerTask: 70
+    cost: 500
   - level: 4
     xp: 300
-    moneyPerTask: 30
-    cost: 300
+    moneyPerTask: 80
+    cost: 900
 --- !u!1 &2132013042
 GameObject:
   m_ObjectHideFlags: 0

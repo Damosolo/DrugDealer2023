@@ -31,7 +31,7 @@ public class MoneyEarnTask : MonoBehaviour
                 countdownStarted = true;
                 countdownTimer = countdownDuration;
 
-                moneyReward = playerLevelManager.GetMoneyPerTask(playerLevel); // Retrieve the money reward based on the player's level
+                moneyReward = Mathf.Max(playerLevelManager.GetMoneyPerTask(playerLevel), 50); // Retrieve the money reward based on the player's level, with a minimum of 50
 
                 textDisplay.enabled = true;
                 textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
