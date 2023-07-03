@@ -61,7 +61,7 @@ public class MoneyEarnTask : MonoBehaviour
         {
             inTrigger = true;
             textDisplay.enabled = true;
-            textDisplay.text = "Press 'E' to start the task.";
+            textDisplay.text = "Press 'E' to sell Weed.";
         }
     }
 
