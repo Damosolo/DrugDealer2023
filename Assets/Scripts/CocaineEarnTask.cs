@@ -9,10 +9,14 @@ public class CocaineEarnTask : MonoBehaviour
     private bool inTrigger = false; // Flag to track if the player is inside the trigger
     private bool countdownStarted = false; // Flag to track if the countdown has started
     private float countdownTimer = 0f; // Timer for the countdown
-    private int moneyReward; // Amount of money rewarded for completing the task
+    private int moneyReward;
 
     public TextMeshProUGUI textDisplay; // Reference to the TextMeshProUGUI component for displaying information
     public CocainePlayerLevelManager playerLevelManager; // Reference to the CocainePlayerLevelManager component
+    public CocaineStockManager cocaineStockManager; // Reference to the CocaineStockManager component
+    public MoneyManager moneyManager; // Reference to the MoneyManager component
+
+    public TextMeshProUGUI errorText; // Reference to the TextMeshProUGUI component for displaying error message
 
     private void Start()
     {
@@ -23,9 +27,9 @@ public class CocaineEarnTask : MonoBehaviour
     {
         if (inTrigger && !countdownStarted && Input.GetKeyDown(KeyCode.E))
         {
-            // Check if player meets the required level to trigger the task
+            // Check if player meets the required level and has at least 1 cocaine stock to trigger the task
             int playerLevel = playerLevelManager.cocainePlayerLevel; // Retrieve the player's level from the CocainePlayerLevelManager
-            if (playerLevel >= playerLevelRequired)
+            if (playerLevel >= playerLevelRequired && cocaineStockManager.currentStock >= 1)
             {
                 countdownStarted = true;
                 countdownTimer = countdownDuration;
@@ -34,6 +38,11 @@ public class CocaineEarnTask : MonoBehaviour
 
                 textDisplay.enabled = true;
                 textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
+            }
+            else
+            {
+                // Show error message if conditions are not met
+                ShowErrorText("No Cocaine Stock Available");
             }
         }
 
@@ -45,8 +54,11 @@ public class CocaineEarnTask : MonoBehaviour
             if (countdownTimer <= 0f)
             {
                 countdownStarted = false;
-                MoneyManager.instance.EarnMoney(moneyReward);
+                moneyManager.money += moneyReward; // Earn money using the MoneyManager reference
                 textDisplay.text = "Task Completed!\nMoney Earned: " + moneyReward;
+
+                // Deduct one cocaine stock from the stock manager
+                cocaineStockManager.RemoveCocaineStock(1);
 
                 // Reset the trigger so that the task can be triggered again
                 inTrigger = false;
@@ -71,5 +83,16 @@ public class CocaineEarnTask : MonoBehaviour
             inTrigger = false;
             textDisplay.enabled = false;
         }
+    }
+
+    private void ShowErrorText(string errorMessage)
+    {
+        errorText.text = errorMessage;
+        Invoke(nameof(ClearErrorText), 2f); // Clear the error message after 2 seconds
+    }
+
+    private void ClearErrorText()
+    {
+        errorText.text = "";
     }
 }

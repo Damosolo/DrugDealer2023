@@ -46,8 +46,17 @@ public class LevelUpBox : MonoBehaviour
         int moneyPerTask = playerLevelManager.GetMoneyPerTask(purchaseLevel);
         nextLevelCost = playerLevelManager.GetLevelCost(purchaseLevel + 1);
 
-        purchaseText.text = "Purchase: Level " + purchaseLevel + "\nReward: " + xpReward + " XP, $" + moneyPerTask + " per Task";
-        purchasePrompt.text = "Cost: $" + nextLevelCost + "\nPress E to purchase";
+        if (nextLevelCost == 0)
+        {
+            // Reached max level, display "Max Level" text
+            purchaseText.text = "Max Level";
+            purchasePrompt.text = "";
+        }
+        else
+        {
+            purchaseText.text = "Purchase: Level " + purchaseLevel + "\nReward: " + xpReward + " XP, $" + moneyPerTask + " per Task";
+            purchasePrompt.text = "Cost: $" + nextLevelCost + "\nPress E to purchase";
+        }
     }
 
     private void ClearPurchaseText()
@@ -58,10 +67,19 @@ public class LevelUpBox : MonoBehaviour
 
     private void AttemptPurchase()
     {
-        if (playerLevelManager.moneyManager.money >= nextLevelCost)
+        int currentLevel = playerLevelManager.playerLevel;
+        int nextLevelCost = playerLevelManager.GetLevelCost(currentLevel + 1);
+
+        if (nextLevelCost == 0)
+        {
+            // Reached max level, show "Max Level" message
+            errorText.text = "Max Level reached!";
+            Invoke(nameof(DisableErrorText), disableDelay); // Disable error text after a delay
+        }
+        else if (playerLevelManager.moneyManager.money >= nextLevelCost)
         {
             playerLevelManager.moneyManager.SpendMoney(nextLevelCost);
-            playerLevelManager.IncreaseLevel(purchaseLevel + 1);
+            playerLevelManager.IncreaseLevel(currentLevel + 1);
             purchaseLevel++;
             UpdatePurchaseText();
             errorText.text = "Level purchased!";
