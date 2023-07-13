@@ -23,11 +23,17 @@ public class CocaineStockManager : MonoBehaviour
         currentStock = Mathf.Clamp(currentStock, 0, maxStock);
     }
 
-    public void RemoveCocaineStock(int amount)
+    public bool RemoveCocaineStock(int amount)
     {
-        currentStock -= amount;
+        if (currentStock >= amount)
+        {
+            currentStock -= amount;
 
-        // Clamp the stock count to stay within the allowed range
-        currentStock = Mathf.Clamp(currentStock, 0, maxStock);
+            // Clamp the stock count to stay within the allowed range
+            currentStock = Mathf.Clamp(currentStock, 0, maxStock);
+            return true; // Return true if stock removal is successful
+        }
+
+        return false; // Return false if there is insufficient stock
     }
 }

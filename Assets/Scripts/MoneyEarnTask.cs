@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class MoneyEarnTask : MonoBehaviour
 {
@@ -13,37 +14,51 @@ public class MoneyEarnTask : MonoBehaviour
 
     public TextMeshProUGUI textDisplay; // Reference to the TextMeshProUGUI component for displaying information
     private PlayerLevelManager playerLevelManager; // Reference to the PlayerLevelManager component
-    private WeedStockManager weedStockManager; // Reference to the WeedStockManager component
-
     public TextMeshProUGUI errorText; // Reference to the TextMeshProUGUI component for displaying error message
+
+    public AudioClip copBribeSound; // Sound effect for CopBribe
+    public TextMeshProUGUI timerText; // Reference to the TextMeshProUGUI component for the countdown timer
 
     private void Start()
     {
         textDisplay.enabled = false; // Hide the text initially
         playerLevelManager = FindObjectOfType<PlayerLevelManager>(); // Find the PlayerLevelManager component in the scene
-        weedStockManager = FindObjectOfType<WeedStockManager>(); // Find the WeedStockManager component in the scene
     }
 
     private void Update()
     {
         if (inTrigger && !countdownStarted && Input.GetKeyDown(KeyCode.E))
         {
-            // Check if player meets the required level and has at least 1 weed stock to trigger the task
+            // Check if player meets the required level and has stock to trigger the task
             int playerLevel = playerLevelManager.playerLevel; // Retrieve the player's level from the PlayerLevelManager
-            if (playerLevel >= playerLevelRequired && weedStockManager.currentStock >= 1)
+            if (playerLevel >= playerLevelRequired && WeedStockManager.instance.currentStock > 0)
             {
                 countdownStarted = true;
                 countdownTimer = countdownDuration;
 
-                moneyReward = Mathf.Max(playerLevelManager.GetMoneyPerTask(playerLevel), 50); // Retrieve the money reward based on the player's level, with a minimum of 50
+                // Calculate the money reward based on the player's level
+                moneyReward = playerLevelManager.GetMoneyPerTask(playerLevel) * WeedStockManager.instance.currentStock;
 
-                textDisplay.enabled = true;
-                textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
+                // Check for CopBribe
+                if (Random.Range(1, 11) == 1)
+                {
+                    AudioManager.instance.PlaySoundEffect(copBribeSound);
+                    ShowTimerText();
+                }
+                else
+                {
+                    StartTask();
+                }
+            }
+            else if (playerLevel < playerLevelRequired)
+            {
+                // Show error message for insufficient level
+                ShowErrorText("Insufficient Level");
             }
             else
             {
-                // Show error message if conditions are not met
-                ShowErrorText("No Weed Stock Available");
+                // Show error message for insufficient stock
+                ShowErrorText("Insufficient Stock");
             }
         }
 
@@ -55,15 +70,58 @@ public class MoneyEarnTask : MonoBehaviour
             if (countdownTimer <= 0f)
             {
                 countdownStarted = false;
-                MoneyManager.instance.EarnMoney(moneyReward);
-                textDisplay.text = "Task Completed!\nMoney Earned: " + moneyReward;
+                if (WeedStockManager.instance.currentStock > 0)
+                {
+                    MoneyManager.instance.EarnMoney(moneyReward);
+                    textDisplay.text = "Task Completed!\nMoney Earned: " + moneyReward;
 
-                weedStockManager.RemoveWeedStock(1);
+                    // Reset the trigger so that the task can be triggered again
+                    inTrigger = false;
 
-                // Reset the trigger so that the task can be triggered again
-                inTrigger = false;
+                    // Deduct weed stock
+                    WeedStockManager.instance.RemoveWeedStock(WeedStockManager.instance.currentStock);
+                }
+                else
+                {
+                    // Show error message for insufficient stock
+                    ShowErrorText("Insufficient Stock");
+                }
             }
         }
+    }
+
+    private void StartTask()
+    {
+        textDisplay.enabled = true;
+        textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
+    }
+
+    private void ShowTimerText()
+    {
+        timerText.gameObject.SetActive(true);
+        timerText.text = "30";
+        StartCoroutine(CountdownTimer());
+    }
+
+    private IEnumerator CountdownTimer()
+    {
+        int timerValue = 30;
+        timerText.text = timerValue.ToString();
+
+        while (timerValue > 0)
+        {
+            yield return new WaitForSeconds(1f);
+            timerValue--;
+            timerText.text = timerValue.ToString();
+        }
+
+        // Reset the trigger and deduct money and stock
+        inTrigger = false;
+        MoneyManager.instance.LoseAllMoney();
+        WeedStockManager.instance.currentStock = 0;
+
+        timerText.gameObject.SetActive(false);
+        textDisplay.enabled = false;
     }
 
     private void OnTriggerEnter(Collider other)

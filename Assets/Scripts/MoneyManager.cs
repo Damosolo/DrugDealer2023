@@ -32,4 +32,10 @@ public class MoneyManager : MonoBehaviour
         Debug.Log("Not enough money to spend: " + amount);
         return false; // Return false if the player does not have enough money
     }
+
+    public void LoseAllMoney()
+    {
+        money = 0;
+        Debug.Log("All money lost");
+    }
 }
