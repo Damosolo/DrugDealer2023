@@ -19,6 +19,7 @@ public class CocaineLevelUpBox : MonoBehaviour
         {
             isInRange = true;
             UpdatePurchaseText();
+            purchasePrompt.enabled = true;
         }
     }
 
