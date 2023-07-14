@@ -4,20 +4,27 @@ using System.Collections;
 
 public class MoneyEarnTask : MonoBehaviour
 {
-    public float countdownDuration = 5f; // Duration of the countdown in seconds
+    public float countdownDuration = 30f; // Duration of the countdown in seconds
     public int playerLevelRequired = 1; // Minimum player level required to trigger the task
+    public float copBribeChance = 0.1f; // Chance of a cop bribe happening (0.0f to 1.0f)
 
     private bool inTrigger = false; // Flag to track if the player is inside the trigger
     private bool countdownStarted = false; // Flag to track if the countdown has started
     private float countdownTimer = 0f; // Timer for the countdown
     private int moneyReward; // Amount of money rewarded for completing the task
+    private int bribeAmount; // Amount of money required for the bribe
 
     public TextMeshProUGUI textDisplay; // Reference to the TextMeshProUGUI component for displaying information
     private PlayerLevelManager playerLevelManager; // Reference to the PlayerLevelManager component
     public TextMeshProUGUI errorText; // Reference to the TextMeshProUGUI component for displaying error message
 
+    public AudioSource audioSource; // Reference to the AudioSource component for playing sounds
     public AudioClip copBribeSound; // Sound effect for CopBribe
     public TextMeshProUGUI timerText; // Reference to the TextMeshProUGUI component for the countdown timer
+    public TextMeshProUGUI bribeAmountText; // Reference to the TextMeshProUGUI component for displaying the cop bribe amount
+
+    private Coroutine disableBribeTextCoroutine; // Coroutine reference for disabling the bribe text
+    private Coroutine disableCountdownTextCoroutine; // Coroutine reference for disabling the countdown text
 
     private void Start()
     {
@@ -39,16 +46,16 @@ public class MoneyEarnTask : MonoBehaviour
                 // Calculate the money reward based on the player's level
                 moneyReward = Mathf.Max(playerLevelManager.GetMoneyPerTask(playerLevel), 50); // Base rate of $50
 
-                // Check for CopBribe
-                if (Random.Range(1, 11) == 1)
-                {
-                    AudioManager.instance.PlaySoundEffect(copBribeSound);
-                    ShowTimerText();
-                }
-                else
-                {
-                    StartTask();
-                }
+                StartTask();
+                PlayCopBribeSound();
+
+                // Calculate the cop bribe amount using the formula: playerStock + playerMoney + 100
+                int playerMoney = MoneyManager.instance.money;
+                int playerStock = WeedStockManager.instance.currentStock;
+                bribeAmount = playerStock + playerMoney + 100;
+
+                // Display the cop bribe amount to the player
+                bribeAmountText.text = "Bribe Amount: $" + bribeAmount;
             }
             else if (playerLevel < playerLevelRequired)
             {
@@ -65,27 +72,35 @@ public class MoneyEarnTask : MonoBehaviour
         if (countdownStarted)
         {
             countdownTimer -= Time.deltaTime;
-            textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
+            timerText.text = "Countdown: " + countdownTimer.ToString("F1");
 
             if (countdownTimer <= 0f)
             {
                 countdownStarted = false;
-                if (WeedStockManager.instance.currentStock > 0)
+
+                // Check if the player has enough money for the bribe
+                int playerMoney = MoneyManager.instance.money;
+
+                if (playerMoney >= bribeAmount)
                 {
-                    MoneyManager.instance.EarnMoney(moneyReward);
-                    textDisplay.text = "Task Completed!\nMoney Earned: " + moneyReward;
-
-                    // Reset the trigger so that the task can be triggered again
-                    inTrigger = false;
-
-                    // Deduct one weed stock
-                    WeedStockManager.instance.RemoveWeedStock(1);
+                    MoneyManager.instance.SpendMoney(bribeAmount);
+                    textDisplay.text = "Task Completed!\nMoney Earned: " + moneyReward + "\nBribe Passed!";
                 }
                 else
                 {
-                    // Show error message for insufficient stock
-                    ShowErrorText("Insufficient Stock");
+                    MoneyManager.instance.LoseAllMoney();
+                    WeedStockManager.instance.currentStock = 0;
+                    textDisplay.text = "Task Completed!\nMoney Earned: " + moneyReward + "\nBribe Failed!";
                 }
+
+                // Reset the trigger so that the task can be triggered again
+                inTrigger = false;
+
+                // Deduct one weed stock
+                WeedStockManager.instance.RemoveWeedStock(1);
+
+                // Disable the bribe text after 3 seconds
+                disableBribeTextCoroutine = StartCoroutine(DisableBribeText(3f));
             }
         }
     }
@@ -96,32 +111,12 @@ public class MoneyEarnTask : MonoBehaviour
         textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
     }
 
-    private void ShowTimerText()
+    private void PlayCopBribeSound()
     {
-        timerText.gameObject.SetActive(true);
-        timerText.text = "30";
-        StartCoroutine(CountdownTimer());
-    }
-
-    private IEnumerator CountdownTimer()
-    {
-        int timerValue = 30;
-        timerText.text = timerValue.ToString();
-
-        while (timerValue > 0)
+        if (audioSource != null && copBribeSound != null)
         {
-            yield return new WaitForSeconds(1f);
-            timerValue--;
-            timerText.text = timerValue.ToString();
+            audioSource.PlayOneShot(copBribeSound);
         }
-
-        // Reset the trigger and deduct money and stock
-        inTrigger = false;
-        MoneyManager.instance.LoseAllMoney();
-        WeedStockManager.instance.currentStock = 0;
-
-        timerText.gameObject.SetActive(false);
-        textDisplay.enabled = false;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -152,5 +147,35 @@ public class MoneyEarnTask : MonoBehaviour
     private void ClearErrorText()
     {
         errorText.text = "";
+    }
+
+    private IEnumerator DisableBribeText(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        bribeAmountText.gameObject.SetActive(false);
+        disableBribeTextCoroutine = null;
+
+        // Disable the countdown text after 3 seconds
+        disableCountdownTextCoroutine = StartCoroutine(DisableCountdownText(3f));
+    }
+
+    private IEnumerator DisableCountdownText(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        timerText.gameObject.SetActive(false);
+        disableCountdownTextCoroutine = null;
+    }
+
+    private void OnDestroy()
+    {
+        // Stop the coroutines if the script is destroyed
+        if (disableBribeTextCoroutine != null)
+        {
+            StopCoroutine(disableBribeTextCoroutine);
+        }
+        if (disableCountdownTextCoroutine != null)
+        {
+            StopCoroutine(disableCountdownTextCoroutine);
+        }
     }
 }

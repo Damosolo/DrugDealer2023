@@ -6,6 +6,7 @@ public class CocaineEarnTask : MonoBehaviour
 {
     public float countdownDuration = 10f; // Duration of the countdown in seconds
     public int playerLevelRequired = 1; // Minimum player level required to trigger the task
+    public float copBribeChance = 0.1f; // Chance of a cop bribe happening (0.0f to 1.0f)
 
     private bool inTrigger = false; // Flag to track if the player is inside the trigger
     private bool countdownStarted = false; // Flag to track if the countdown has started
@@ -17,8 +18,13 @@ public class CocaineEarnTask : MonoBehaviour
     public TextMeshProUGUI errorText; // Reference to the TextMeshProUGUI component for displaying error message
     public CocaineStockManager stockManager; // Reference to the CocaineStockManager component
 
+    public AudioSource audioSource; // Reference to the AudioSource component for playing sounds
     public AudioClip copBribeSound; // Sound effect for CopBribe
     public TextMeshProUGUI timerText; // Reference to the TextMeshProUGUI component for the countdown timer
+    public TextMeshProUGUI bribeAmountText; // Reference to the TextMeshProUGUI component for displaying the cop bribe amount
+
+    private Coroutine disableBribeTextCoroutine; // Coroutine reference for disabling the bribe text
+    private Coroutine disableCountdownTextCoroutine; // Coroutine reference for disabling the countdown text
 
     private void Start()
     {
@@ -42,9 +48,9 @@ public class CocaineEarnTask : MonoBehaviour
                     moneyReward = playerLevelManager.GetMoneyPerTask(playerLevel); // Retrieve the money reward based on the player's level
 
                     // Check for CopBribe
-                    if (Random.Range(1, 11) == 1)
+                    if (Random.value <= copBribeChance)
                     {
-                        AudioManager.instance.PlaySoundEffect(copBribeSound);
+                        PlayCopBribeSound();
                         ShowTimerText();
                     }
                     else
@@ -68,7 +74,7 @@ public class CocaineEarnTask : MonoBehaviour
         if (countdownStarted)
         {
             countdownTimer -= Time.deltaTime;
-            textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
+            timerText.text = "Countdown: " + countdownTimer.ToString("F1");
 
             if (countdownTimer <= 0f)
             {
@@ -89,6 +95,9 @@ public class CocaineEarnTask : MonoBehaviour
                     // Show error message if player has no stock
                     ShowErrorText("Insufficient Stock");
                 }
+
+                // Disable the bribe text after 3 seconds
+                disableBribeTextCoroutine = StartCoroutine(DisableBribeText(3f));
             }
         }
     }
@@ -99,32 +108,18 @@ public class CocaineEarnTask : MonoBehaviour
         textDisplay.text = "Countdown: " + countdownTimer.ToString("F1");
     }
 
+    private void PlayCopBribeSound()
+    {
+        if (audioSource != null && copBribeSound != null)
+        {
+            audioSource.PlayOneShot(copBribeSound);
+        }
+    }
+
     private void ShowTimerText()
     {
         timerText.gameObject.SetActive(true);
-        timerText.text = "30";
-        StartCoroutine(CountdownTimer());
-    }
-
-    private IEnumerator CountdownTimer()
-    {
-        int timerValue = 30;
-        timerText.text = timerValue.ToString();
-
-        while (timerValue > 0)
-        {
-            yield return new WaitForSeconds(1f);
-            timerValue--;
-            timerText.text = timerValue.ToString();
-        }
-
-        // Reset the trigger and deduct money and stock
-        inTrigger = false;
-        MoneyManager.instance.LoseAllMoney();
-        stockManager.currentStock = 0;
-
-        timerText.gameObject.SetActive(false);
-        textDisplay.enabled = false;
+        timerText.text = "Countdown: " + countdownTimer.ToString("F1");
     }
 
     private void OnTriggerEnter(Collider other)
@@ -155,5 +150,25 @@ public class CocaineEarnTask : MonoBehaviour
     private void ClearErrorText()
     {
         errorText.text = "";
+    }
+
+    private IEnumerator DisableBribeText(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        bribeAmountText.gameObject.SetActive(false);
+        disableBribeTextCoroutine = null;
+    }
+
+    private void OnDestroy()
+    {
+        // Stop the coroutines if the script is destroyed
+        if (disableBribeTextCoroutine != null)
+        {
+            StopCoroutine(disableBribeTextCoroutine);
+        }
+        if (disableCountdownTextCoroutine != null)
+        {
+            StopCoroutine(disableCountdownTextCoroutine);
+        }
     }
 }
