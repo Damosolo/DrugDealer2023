@@ -37,7 +37,7 @@ public class MoneyEarnTask : MonoBehaviour
                 countdownTimer = countdownDuration;
 
                 // Calculate the money reward based on the player's level
-                moneyReward = playerLevelManager.GetMoneyPerTask(playerLevel) * WeedStockManager.instance.currentStock;
+                moneyReward = Mathf.Max(playerLevelManager.GetMoneyPerTask(playerLevel), 50); // Base rate of $50
 
                 // Check for CopBribe
                 if (Random.Range(1, 11) == 1)
@@ -78,8 +78,8 @@ public class MoneyEarnTask : MonoBehaviour
                     // Reset the trigger so that the task can be triggered again
                     inTrigger = false;
 
-                    // Deduct weed stock
-                    WeedStockManager.instance.RemoveWeedStock(WeedStockManager.instance.currentStock);
+                    // Deduct one weed stock
+                    WeedStockManager.instance.RemoveWeedStock(1);
                 }
                 else
                 {
