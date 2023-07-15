@@ -33,6 +33,11 @@ public class MoneyManager : MonoBehaviour
         return false; // Return false if the player does not have enough money
     }
 
+    public bool HasPaid(int amount)
+    {
+        return money >= amount;
+    }
+
     public void LoseAllMoney()
     {
         money = 0;
