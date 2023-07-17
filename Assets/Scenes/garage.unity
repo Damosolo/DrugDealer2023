@@ -7642,6 +7642,8 @@ MonoBehaviour:
   playerLevelManager: {fileID: 1958606685}
   errorText: {fileID: 583570117}
   stockManager: {fileID: 1958606687}
+  audioSource: {fileID: 83172216}
+  timerText: {fileID: 888846735}
 --- !u!65 &526745649
 BoxCollider:
   m_ObjectHideFlags: 0
