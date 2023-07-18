@@ -3,7 +3,6 @@ using TMPro;
 
 public class CocaineLevelUpBox : MonoBehaviour
 {
-    public int purchaseLevel;
     public TextMeshProUGUI purchaseText;
     public TextMeshProUGUI purchasePrompt;
     public CocainePlayerLevelManager playerLevelManager;
@@ -12,6 +11,9 @@ public class CocaineLevelUpBox : MonoBehaviour
 
     private bool isInRange;
     private int nextLevelCost;
+    private int newMoneyPerTask;
+    private int currentLevel;
+    private int currentMoney;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -37,26 +39,26 @@ public class CocaineLevelUpBox : MonoBehaviour
     {
         if (isInRange && Input.GetKeyDown(KeyCode.E))
         {
-            AttemptPurchase();
+            AttemptUpgradePurchase();
         }
     }
 
     private void UpdatePurchaseText()
     {
-        int xpReward = playerLevelManager.GetXPReward(purchaseLevel);
-        int moneyPerTask = playerLevelManager.GetMoneyPerTask(purchaseLevel);
-        nextLevelCost = playerLevelManager.GetLevelCost(purchaseLevel + 1);
+        currentLevel = playerLevelManager.cocainePlayerLevel;
+        currentMoney = playerLevelManager.moneyManager.money;
+        nextLevelCost = playerLevelManager.GetLevelCost(currentLevel + 1);
+        newMoneyPerTask = playerLevelManager.GetMoneyPerTask(currentLevel + 1);
 
         if (nextLevelCost == 0)
         {
-            // Reached max level, display "Max Level" text
             purchaseText.text = "Max Level";
             purchasePrompt.text = "";
         }
         else
         {
-            purchaseText.text = "Purchase: Level " + purchaseLevel + "\nReward: " + xpReward + " XP, $" + moneyPerTask + " per Task";
-            purchasePrompt.text = "Cost: $" + nextLevelCost + "\nPress E to purchase";
+            purchaseText.text = $"Purchase: Upgrade\nNew Rate: ${newMoneyPerTask} per Task";
+            purchasePrompt.text = $"Cost: ${nextLevelCost}\nPress E to purchase";
         }
     }
 
@@ -66,31 +68,29 @@ public class CocaineLevelUpBox : MonoBehaviour
         purchasePrompt.text = "";
     }
 
-    private void AttemptPurchase()
+    private void AttemptUpgradePurchase()
     {
-        int currentLevel = playerLevelManager.cocainePlayerLevel;
-        int nextLevelCost = playerLevelManager.GetLevelCost(currentLevel + 1);
-
         if (nextLevelCost == 0)
         {
-            // Reached max level, show "Max Level" message
-            errorText.text = "Max Level reached!";
-            Invoke(nameof(DisableErrorText), disableDelay); // Disable error text after a delay
+            ShowError("Max Level reached!");
         }
-        else if (playerLevelManager.moneyManager.money >= nextLevelCost)
+        else if (currentMoney >= nextLevelCost)
         {
             playerLevelManager.moneyManager.SpendMoney(nextLevelCost);
             playerLevelManager.IncreaseLevel(currentLevel + 1);
-            purchaseLevel++;
             UpdatePurchaseText();
-            errorText.text = "Level purchased!";
-            Invoke(nameof(DisableErrorText), disableDelay); // Disable error text after a delay
+            ShowError("Upgrade purchased!");
         }
         else
         {
-            errorText.text = "Cannot purchase level. Insufficient funds.";
-            Invoke(nameof(DisableErrorText), disableDelay); // Disable error text after a delay
+            ShowError("Cannot purchase upgrade. Insufficient funds.");
         }
+    }
+
+    private void ShowError(string message)
+    {
+        errorText.text = message;
+        Invoke(nameof(DisableErrorText), disableDelay);
     }
 
     private void DisableErrorText()

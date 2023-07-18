@@ -14,7 +14,7 @@ public class CocainePlayerLevelManager : MonoBehaviour
         public int level;
         public int xp;
         public int moneyPerTask;
-        public int cost; // Add the 'cost' property
+        public int cost;
     }
 
     public List<LevelReward> levelRewards = new List<LevelReward>();
@@ -55,17 +55,15 @@ public class CocainePlayerLevelManager : MonoBehaviour
 
     public int GetMoneyPerTask(int level)
     {
-        int baseRate = 200; // Set the base rate to 200
-        int additionalRate = 0; // Add any additional rate based on the player's level
+        int baseRate = 200;
 
         if (levelRewardMap.ContainsKey(level))
         {
-            additionalRate = levelRewardMap[level].moneyPerTask;
+            return baseRate + levelRewardMap[level].moneyPerTask;
         }
 
-        return baseRate + additionalRate;
+        return baseRate;
     }
-
 
     public int GetLevelCost(int level)
     {
@@ -102,6 +100,14 @@ public class CocainePlayerLevelManager : MonoBehaviour
 
     public void IncreaseLevel(int levelIncrease)
     {
-        cocainePlayerLevel += levelIncrease;
+        // Get the maximum defined level
+        int maxLevel = 0;
+        foreach (var level in levelRewardMap.Keys)
+        {
+            maxLevel = Mathf.Max(maxLevel, level);
+        }
+
+        // Increase the player's level, but do not exceed the maximum defined level
+        cocainePlayerLevel = Mathf.Min(cocainePlayerLevel + levelIncrease, maxLevel);
     }
 }

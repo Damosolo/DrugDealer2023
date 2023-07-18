@@ -14,31 +14,23 @@ public class PlayerLevelManager : MonoBehaviour
         public int level;
         public int xp;
         public int moneyPerTask;
-        public int cost; // Add the 'cost' property
+        public int cost;
     }
 
     public List<LevelReward> levelRewards = new List<LevelReward>()
     {
-        new LevelReward { level = 2, xp = 100, moneyPerTask = 60, cost = 10 }, // Level 1 reward
-        new LevelReward { level = 3, xp = 200, moneyPerTask = 100, cost = 20 }, // Level 2 reward
-        new LevelReward { level = 4, xp = 300, moneyPerTask = 110, cost = 30 }  // Level 3 reward
-        // Add more levels and rewards as needed
+        new LevelReward { level = 2, xp = 100, moneyPerTask = 60, cost = 10 },
+        new LevelReward { level = 3, xp = 200, moneyPerTask = 100, cost = 20 },
+        new LevelReward { level = 4, xp = 300, moneyPerTask = 110, cost = 30 }
     };
 
     public void BuyXP()
     {
-        // Check if the player has enough money to buy XP
         if (moneyManager.money >= xpCost)
         {
-            // Deduct the cost from the money
             moneyManager.SpendMoney(xpCost);
-
-            // Increase the player's level
-            playerLevel += xpIncrease;
-
-            // Reward the player based on the new level
+            IncreaseLevel(xpIncrease);
             RewardPlayer();
-
             Debug.Log("XP Purchased! Player Level: " + playerLevel);
         }
         else
@@ -56,7 +48,7 @@ public class PlayerLevelManager : MonoBehaviour
                 return reward.xp;
             }
         }
-        return 0; // or any default value you prefer
+        return 0;
     }
 
     public int GetMoneyPerTask(int level)
@@ -68,7 +60,7 @@ public class PlayerLevelManager : MonoBehaviour
                 return reward.moneyPerTask;
             }
         }
-        return 0; // Or any default value you prefer
+        return 0;
     }
 
     public int GetLevelCost(int level)
@@ -80,32 +72,26 @@ public class PlayerLevelManager : MonoBehaviour
                 return reward.cost;
             }
         }
-        return 0; // or any default value you prefer
+        return 0;
     }
 
     private void RewardPlayer()
     {
-        // Check if the current level has an XP reward
         int reward = GetXPReward(playerLevel);
         if (reward > 0)
         {
             Debug.Log("Player rewarded at level: " + playerLevel + ", XP Reward: " + reward);
-            // Add code here to provide the XP reward to the player
         }
         else
         {
             Debug.Log("Player rewarded at level: " + playerLevel + ", No XP Reward");
         }
 
-        // Check if the current level has a money reward
         int moneyReward = GetMoneyPerTask(playerLevel);
         if (moneyReward > 0)
         {
             Debug.Log("Player rewarded at level: " + playerLevel + ", Money Reward: " + moneyReward);
-            // Add code here to provide the money reward to the player
             moneyManager.money += moneyReward;
-
-            // Update the money display or perform any other necessary actions
         }
         else
         {
@@ -113,8 +99,16 @@ public class PlayerLevelManager : MonoBehaviour
         }
     }
 
-    public void IncreaseLevel(int level)
+    public void IncreaseLevel(int levelIncrease)
     {
-        playerLevel = level;
+        // Get the maximum defined level
+        int maxLevel = 0;
+        foreach (var reward in levelRewards)
+        {
+            maxLevel = Mathf.Max(maxLevel, reward.level);
+        }
+
+        // Increase the player's level, but do not exceed the maximum defined level
+        playerLevel = Mathf.Min(playerLevel + levelIncrease, maxLevel);
     }
 }

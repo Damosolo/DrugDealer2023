@@ -3,7 +3,6 @@ using TMPro;
 
 public class LevelUpBox : MonoBehaviour
 {
-    public int purchaseLevel;
     public TextMeshProUGUI purchaseText;
     public TextMeshProUGUI purchasePrompt;
     public PlayerLevelManager playerLevelManager;
@@ -12,6 +11,7 @@ public class LevelUpBox : MonoBehaviour
 
     private bool isInRange;
     private int nextLevelCost;
+    private int newMoneyPerTask;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -19,6 +19,7 @@ public class LevelUpBox : MonoBehaviour
         {
             isInRange = true;
             UpdatePurchaseText();
+            purchasePrompt.enabled = true;
         }
     }
 
@@ -42,9 +43,9 @@ public class LevelUpBox : MonoBehaviour
 
     private void UpdatePurchaseText()
     {
-        int xpReward = playerLevelManager.GetXPReward(purchaseLevel);
-        int moneyPerTask = playerLevelManager.GetMoneyPerTask(purchaseLevel);
-        nextLevelCost = playerLevelManager.GetLevelCost(purchaseLevel + 1);
+        int currentLevel = playerLevelManager.playerLevel;
+        nextLevelCost = playerLevelManager.GetLevelCost(currentLevel + 1);
+        newMoneyPerTask = playerLevelManager.GetMoneyPerTask(currentLevel + 1);
 
         if (nextLevelCost == 0)
         {
@@ -54,7 +55,7 @@ public class LevelUpBox : MonoBehaviour
         }
         else
         {
-            purchaseText.text = "Purchase: Level " + purchaseLevel + "\nReward: " + xpReward + " XP, $" + moneyPerTask + " per Task";
+            purchaseText.text = "Purchase: Upgrade\nNew Rate: $" + newMoneyPerTask + " per Task";
             purchasePrompt.text = "Cost: $" + nextLevelCost + "\nPress E to purchase";
         }
     }
@@ -80,14 +81,13 @@ public class LevelUpBox : MonoBehaviour
         {
             playerLevelManager.moneyManager.SpendMoney(nextLevelCost);
             playerLevelManager.IncreaseLevel(currentLevel + 1);
-            purchaseLevel++;
             UpdatePurchaseText();
-            errorText.text = "Level purchased!";
+            errorText.text = "Upgrade purchased!";
             Invoke(nameof(DisableErrorText), disableDelay); // Disable error text after a delay
         }
         else
         {
-            errorText.text = "Cannot purchase level. Insufficient funds.";
+            errorText.text = "Cannot purchase upgrade. Insufficient funds.";
             Invoke(nameof(DisableErrorText), disableDelay); // Disable error text after a delay
         }
     }
